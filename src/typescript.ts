@@ -112,7 +112,12 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
 
                         if(pick.length){
                             for(const prop of pick){
-                                cOut+=`\n${tab2}${prop}:${pickVar}.${prop},`;
+                                const eProp=entity.props.find(p=>p.name==prop);
+                                if(eProp?.isValueType){
+                                    cOut+=`\n${tab2}${prop}:${pickVar}.${prop},`;
+                                }else{
+                                    cOut+=`\n${tab2}${prop}:cloneObj(${pickVar}.${prop}),`;
+                                }
                             }
                         }
 
@@ -124,7 +129,15 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                                 if(prop.copySource?.entity!==e || prop.isPointer || prop.isQueryPointer){
                                     continue;
                                 }
-                                cOut+=`\n${tab2}${prop.name}:${firstToLower(prop.copySource.entity)}${isOptional?'?':''}.${prop.copySource.prop},`;
+                                if(prop.isValueType){
+                                    cOut+=
+                                        `\n${tab2}${prop.name}:${firstToLower(prop.copySource.entity)}`+
+                                        `${isOptional?'?':''}.${prop.copySource.prop},`;
+                                }else{
+                                    cOut+=
+                                        `\n${tab2}${prop.name}:cloneObj(${firstToLower(prop.copySource.entity)}`+
+                                        `${isOptional?'?':''}.${prop.copySource.prop}),`;
+                                }
                             }
                         }
 
@@ -200,6 +213,32 @@ const deleteUndefined=<T extends {[key:string]:any}>(obj:T):T=>
     }
 
     return obj;
+}
+
+const cloneObj=<T>(obj:T, maxDepth=20):T=>
+{
+    if(maxDepth<0){
+        throw new Error('cloneObj max depth reached');
+    }
+    maxDepth--;
+    if(!obj || typeof obj !== 'object'){
+        return obj;
+    }
+
+    if(Array.isArray(obj)){
+        const clone=[];
+        for(let i=0;i<obj.length;i++){
+            clone.push(cloneObj(obj[i],maxDepth));
+        }
+        return clone as any;
+    }else{
+        const clone:any={}
+        for(const e in obj){
+            clone[e]=cloneObj(obj[e],maxDepth);
+        }
+        return clone;
+    }
+
 }
 `
         );

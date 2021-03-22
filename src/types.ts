@@ -26,7 +26,7 @@ export type SysType=
     'double'|
     'bool'|
     'other'; // any other types
-export const allSysTypes:SysType[]=[
+export const valueTypes:SysType[]=[
     'int',
     'string',
     'double',
@@ -77,7 +77,7 @@ export interface Prop
     type:SysType;
     typeName:string;
     isNullable:boolean;
-    isSysType:boolean;
+    isValueType:boolean;
     isQueryPointer:boolean;
     isPointer:boolean;
     isCollection:boolean;

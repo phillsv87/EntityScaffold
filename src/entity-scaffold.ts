@@ -1,5 +1,5 @@
 import * as fs from 'fs/promises';
-import { allEntityTypes, allStartEnds, allSysTypes, Generator, Entity, EntityType, Op, ProcessingConfig, ProcessingCtx, Prop, startGen } from "./types";
+import { allEntityTypes, allStartEnds, valueTypes, Generator, Entity, EntityType, Op, ProcessingConfig, ProcessingCtx, Prop, startGen } from "./types";
 
 
 const defaultMaxPass=10000;
@@ -120,7 +120,7 @@ export function parsePropAry(ctx:ProcessingCtx, parts:string[], entityType:Entit
             .split(']').join('');
     }
 
-    const isSysType=allSysTypes.includes(type as any);
+    const isValueType=valueTypes.includes(type as any);
 
     parts=[...parts];
     parts.shift();
@@ -128,12 +128,12 @@ export function parsePropAry(ctx:ProcessingCtx, parts:string[], entityType:Entit
         name,
         comment:null,
         isId:false,
-        type:isSysType?type as any:'other',
+        type:isValueType?type as any:'other',
         typeName:type,
         isNullable,
         required:false,
         copySource:null,
-        isSysType,
+        isValueType,
         isQueryPointer,
         isPointer,
         isCollection,
@@ -280,6 +280,27 @@ async function resolveCtxAsync(ctx:ProcessingCtx)
                 'Max resolve passes reached. '+
                 'There is most likely a copy loop in the provided model. '+
                 'maxPasses='+ctx.maxPasses);
+        }
+    }
+
+    // Update isValueType of union, enum and typeDefs
+    for(const e of ctx.entities){
+        for(const prop of e.props){
+            if(prop.isValueType){
+                continue;
+            }
+            const ep=ctx.entities.find(et=>et.name===prop.typeName);
+            if(!ep){
+                continue;
+            }
+            if(ep.type==='union' || ep.type==='enum'){
+                prop.isValueType=true;
+            }else if(ep.type==='typeDef'){
+                const typeProp=ep.props.find(p=>p.name==='type');
+                if(typeProp && valueTypes.includes(typeProp.typeName as any)){
+                    prop.isValueType=true;
+                }
+            }
         }
     }
 }
