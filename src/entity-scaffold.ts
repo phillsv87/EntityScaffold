@@ -274,7 +274,7 @@ export async function processAsync(config:ProcessingConfig):Promise<ProcessingCt
     }
 
     for(const input of ctx.inputs){
-        const entities=await input.handler(ctx,input.source);
+        const entities=await input.handler(ctx);
         for(const e of entities){
             ctx.entities.push(e);
         }
@@ -283,7 +283,7 @@ export async function processAsync(config:ProcessingConfig):Promise<ProcessingCt
     await resolveCtxAsync(ctx);
 
     for(const output of ctx.outputs){
-        await output.handler(ctx,output.destination);
+        await output.handler(ctx);
     }
 
     ctx.genStack=[];

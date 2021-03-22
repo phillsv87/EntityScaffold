@@ -1,14 +1,12 @@
-export type InputHandler=(ctx:ProcessingCtx, source:string)=>Promise<Entity[]>;
+export type InputHandler=(ctx:ProcessingCtx)=>Promise<Entity[]>;
 export interface Input
 {
-    source:string;
     handler:InputHandler;
 }
 
-export type OutputHandler=(ctx:ProcessingCtx, destination:string)=>Promise<void>;
+export type OutputHandler=(ctx:ProcessingCtx)=>Promise<void>;
 export interface Output
 {
-    destination:string;
     handler:OutputHandler;
 }
 

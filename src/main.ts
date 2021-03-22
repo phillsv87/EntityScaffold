@@ -14,11 +14,6 @@ const args=process.argv.reduce((args,v,index,ary)=>{
     return args;
 },{} as {[key:string]:string});
 
-if(!args['-src']){
-    console.error('-src required');
-    process.exit(1);
-}
-
 
 async function processModelAsync()
 {
@@ -26,7 +21,6 @@ async function processModelAsync()
         const ctx=await processAsync({
             args,
             inputs:[{
-                source:args['-src'],
                 handler:lucidCsvInputHandler
             }],
             outputs:[
@@ -39,6 +33,7 @@ async function processModelAsync()
 
     }catch(ex){
         console.error(ex);
+        process.exit(1);
     }
 }
 

@@ -8,8 +8,14 @@ const shapeKey='Shape Library';
 const entityShape='Entity Relationship';
 const typeKey='Text Area 1';
 
-export const lucidCsvInputHandler:InputHandler=async (ctx:ProcessingCtx, source:string)=>
+export const lucidCsvInputHandler:InputHandler=async (ctx:ProcessingCtx)=>
 {
+    
+    const source:string=ctx.args['--lucid-csv'];
+    if(!source){
+        throw new Error('--lucid-csv required');
+    }
+
     const entities:Entity[]=[];
 
     const csv=parseCsv((await fs.readFile(source)).toString(),true);
