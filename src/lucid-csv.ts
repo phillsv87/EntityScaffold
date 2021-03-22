@@ -8,7 +8,7 @@ const shapeKey='Shape Library';
 const entityShape='Entity Relationship';
 const typeKey='Text Area 1';
 
-export const lucidCsvGenerator:InputHandler=async (ctx:ProcessingCtx, source:string)=>
+export const lucidCsvInputHandler:InputHandler=async (ctx:ProcessingCtx, source:string)=>
 {
     const entities:Entity[]=[];
 

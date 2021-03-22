@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import { createDefaultFactories } from './default-generators';
 import { processAsync } from './entity-scaffold';
-import { lucidCsvGenerator } from './lucid-csv-generator';
+import { lucidCsvInputHandler } from './lucid-csv';
 
 console.log('entity-scaffold')
 
@@ -27,7 +27,7 @@ async function processModelAsync()
             args,
             inputs:[{
                 source:args['-src'],
-                handler:lucidCsvGenerator
+                handler:lucidCsvInputHandler
             }],
             outputs:[
 
