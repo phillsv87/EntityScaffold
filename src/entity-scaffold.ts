@@ -189,6 +189,9 @@ async function resolveEntityAsync(ctx:ProcessingCtx, entity:Entity)
 
         for(const op of entity.ops){
             if(op.prop){
+                if(entity.props.find(p=>p.name===op.prop?.name)){
+                    throw new Error('Duplicate prop:'+op.prop.name+', entity:'+entity.name)
+                }
                 entity.props.push(op.prop);
                 for(const sOp of ctx.genStack){
                     const clone=createGenerator(ctx,sOp.name,sOp.args);

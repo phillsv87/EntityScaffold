@@ -2,6 +2,7 @@ import * as fs from 'fs/promises';
 import { createDefaultFactories } from './default-generators';
 import { processAsync } from './entity-scaffold';
 import { lucidCsvInputHandler } from './lucid-csv';
+import { TypeScriptOutputHandler } from './typescript';
 
 console.log('entity-scaffold')
 
@@ -23,9 +24,9 @@ async function processModelAsync()
             inputs:[{
                 handler:lucidCsvInputHandler
             }],
-            outputs:[
-
-            ],
+            outputs:[{
+                handler:TypeScriptOutputHandler
+            }],
             generatorFactories:createDefaultFactories()
         });
 

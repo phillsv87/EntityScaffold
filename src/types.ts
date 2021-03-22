@@ -25,14 +25,12 @@ export type SysType=
     'string'|
     'double'|
     'bool'|
-    'Timestamp'|
     'other'; // any other types
 export const allSysTypes:SysType[]=[
     'int',
     'string',
     'double',
     'bool',
-    'Timestamp',
 ]
 
 export type EntityType=                   'interface'|'enum'|'union'|'typeDef';
@@ -98,12 +96,26 @@ export class Generator
     name:string;
     args:string[];
     resolved:boolean;
+
+    private _namedArgs?:{[key:string]:string};
     
     constructor(name:string, args:string[])
     {
         this.name=name;
         this.args=args;
         this.resolved=false;
+
+        for(let i=0;i<args.length;i++){
+            const parts=args[i].split('=',2);
+            if(parts.length===1){
+                continue;
+            }
+            if(!this._namedArgs){
+                this._namedArgs={};
+            }
+            this._namedArgs[parts[0]]=parts[1];
+            args[i]=parts[1];
+        }
     }
 
     getDeps(ctx:ProcessingCtx):Entity[]
@@ -121,6 +133,16 @@ export class Generator
     executeAsync(ctx:ProcessingCtx, prop:Prop|null, op:Op|null):Promise<void>
     {
         return new Promise<void>((r)=>r());
+    }
+
+    getArg(index:number,name?:string){
+        if(name){
+            const v=this._namedArgs?.[name];
+            if(v!==undefined){
+                return v;
+            }
+        }
+        return this.args[index];
     }
 }
 
