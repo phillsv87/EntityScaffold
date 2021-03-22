@@ -81,7 +81,7 @@ export function parsePropAry(ctx:ProcessingCtx, parts:string[], entityType:Entit
         throw new Error('Empty Prop array');
     }
 
-    let [name,type]=parts[0].split(':').map(s=>s.trim());
+    let [name,type]=parts[0].split(':',2).map(s=>s.trim());
     if(entityType==='union' && !type){
         type='string';
     }
@@ -104,12 +104,14 @@ export function parsePropAry(ctx:ProcessingCtx, parts:string[], entityType:Entit
     const isCollection=type.includes('[');
     const isNullable=type.includes('?');
 
-    type=type
-        .split('*').join('')
-        .split(' ').join('')
-        .split('?').join('')
-        .split('[').join('')
-        .split(']').join('');
+    if(entityType==='interface'){
+        type=type
+            .split('*').join('')
+            .split(' ').join('')
+            .split('?').join('')
+            .split('[').join('')
+            .split(']').join('');
+    }
 
     const isSysType=allSysTypes.includes(type as any);
 
@@ -118,10 +120,12 @@ export function parsePropAry(ctx:ProcessingCtx, parts:string[], entityType:Entit
     return {
         name,
         comment:null,
-        isId:name.toLowerCase()==='id',
+        isId:false,
         type:isSysType?type as any:'other',
         typeName:type,
         isNullable,
+        required:false,
+        copySource:null,
         isSysType,
         isQueryPointer,
         isPointer,
@@ -235,6 +239,16 @@ async function resolveEntityAsync(ctx:ProcessingCtx, entity:Entity)
     entity.resolved=entity.props.every(p=>p.resolved);
 
     if(entity.resolved){
+
+        if(!entity.props.some(p=>p.isId)){
+            const idName=entity.name[0].toLowerCase()+entity.name.substr(1)+'Id';
+            const idNoPublicName=idName.split('Public').join('')
+            const idProp=entity.props.find(p=>p.name===idName || p.name===idNoPublicName || p.name==='id');
+            if(idProp){
+                idProp.isId=true;
+            }
+        }
+
         for(const prop of entity.props){
             for(const att of prop.attAry){
                 prop.atts[att.name]=att.value;

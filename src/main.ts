@@ -30,7 +30,10 @@ async function processModelAsync()
             generatorFactories:createDefaultFactories()
         });
 
-        await fs.writeFile('../entities.json',JSON.stringify(ctx,undefined,4))
+        const ctxOut=args['--ctx-out'];
+        if(ctxOut){
+            await fs.writeFile(ctxOut,JSON.stringify(ctx,undefined,4));
+        }
 
     }catch(ex){
         console.error(ex);

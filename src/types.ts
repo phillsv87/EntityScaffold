@@ -45,6 +45,12 @@ export const allStartEnds:StartEnd[]=['@start','@end']
 export const startGen:StartEnd='@start';
 export const endGen:StartEnd='@end';
 
+interface CopySource
+{
+    entity:string;
+    prop:string;
+}
+
 export interface Entity
 {
     name:string;
@@ -74,7 +80,9 @@ export interface Prop
     isQueryPointer:boolean;
     isPointer:boolean;
     isCollection:boolean;
-    comment:string|null,
+    required:boolean;
+    copySource:CopySource|null;
+    comment:string|null;
     /** If true the property has had all of its generates ran and is ready for output */
     resolved:boolean;
 

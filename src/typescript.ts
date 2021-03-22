@@ -15,12 +15,14 @@ function mapType(type:string){
 
 export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
 
-    const tsOut=ctx.args['--ts-out'];
+    const tsOuts=ctx.args['--ts-out']?.split(',').map(o=>o.trim());
     const tsHeader=ctx.args['--ts-out-header'];
 
-    if(!tsOut){
+    if(!tsOuts){
         throw new Error('--ts-out required');
     }
+
+    const tsOut=tsOuts[0];
 
     const append=(content:string,newline:boolean=true)=>
         fs.appendFile(tsOut,content+(newline?'\n':''));
@@ -39,6 +41,10 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
         switch(entity.type){
 
             case 'interface':{
+
+                if(entity.documentPath){
+                    await append(`export const ${entity.name}DocPath="${entity.documentPath}";`)
+                }
                 
                 await append(`export interface ${entity.name}\n{`)
 
@@ -48,7 +54,9 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                         continue;
                     }
 
-                    await append(`${tab}${prop.name}:${mapType(prop.typeName)+(prop.isCollection?'[]':'')};`)
+                    await append(
+                        `${tab}${prop.name}${(!prop.required && !prop.isId)?'?':''}:`+
+                        `${mapType(prop.typeName)}${(prop.isCollection?'[]':'')};`)
                 }
 
                 await append('}\n\n')
@@ -97,6 +105,11 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                 break;
             }
         }
+    }
+
+
+    for(let i=1;i<tsOuts.length;i++){
+        fs.copyFile(tsOut,tsOuts[i]);
     }
 
 }

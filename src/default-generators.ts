@@ -27,6 +27,7 @@ export function createDefaultFactories():{[name:string]:GeneratorFactory}
         "@end":(name,args)=>new EndGenerator(name,args),
         "@copy":(name,args)=>new CopyGenerator(name,args),
         "@copyValue":(name,args)=>new CopyValueGenerator(name,args),
+        "@required":(name,args)=>new RequiredGenerator(name,args),
 
     }
 }
@@ -162,10 +163,10 @@ export class CopyGenerator extends Generator
             name,
             isId:false,
             sources:[],
+            copySource:{entity:typeName,prop:prop.name},
             atts:cloneObj(prop.atts),
             attAry:cloneObj(prop.attAry)
         }
-        prop.attAry.push({name:'copy-from',value:{type:typeName,prop:prop.name}})
 
         if(forward){
             prop.sources.push(forward);
@@ -199,6 +200,17 @@ export class CopyValueGenerator extends Generator
 
         // todo
 
+        this.resolved=true;
+    }
+}
+
+export class RequiredGenerator extends Generator
+{
+    async executeAsync(ctx:ProcessingCtx, prop:Prop|null, op:Op|null):Promise<void>
+    {
+        if(prop){
+            prop.required=true;
+        }
         this.resolved=true;
     }
 }
