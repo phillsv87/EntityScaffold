@@ -108,7 +108,7 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                             cOut+=`\n${tab}${firstToLower(e)}:${e+(isOptional?'|null':'')}`;
                         }
 
-                        cOut+=`\n):${entity.name}{\n${tab}return {`;
+                        cOut+=`\n):${entity.name}{\n${tab}return deleteUndefined({`;
 
                         if(pick.length){
                             for(const prop of pick){
@@ -129,7 +129,7 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                         }
 
 
-                        cOut+=`\n${tab}}\n}`;
+                        cOut+=`\n${tab}});\n}`;
 
                         await append(cOut);
 
@@ -183,6 +183,26 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                 break;
             }
         }
+    }
+
+    if(copyConstructors){
+        await append(
+`
+const deleteUndefined=<T extends {[key:string]:any}>(obj:T):T=>
+{
+    if(!obj){
+        return obj;
+    }
+    for(const e in obj){
+        if(obj[e]===undefined){
+            delete obj[e];
+        }
+    }
+
+    return obj;
+}
+`
+        );
     }
 
 
