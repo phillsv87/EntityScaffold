@@ -49,6 +49,7 @@ interface CopySource
 {
     entity:string;
     prop:string;
+    optional?:boolean;
 }
 
 export interface Entity
@@ -122,7 +123,8 @@ export class Generator
                 this._namedArgs={};
             }
             this._namedArgs[parts[0]]=parts[1];
-            args[i]=parts[1];
+            args.splice(i,1);
+            i--;
         }
     }
 

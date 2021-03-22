@@ -26,6 +26,13 @@ export function toEntityType(type:string):EntityType{
     return type as any;
 }
 
+export function firstToLower(value:string){
+    if(!value){
+        return '';
+    }
+    return value[0].toLowerCase()+value.substr(1);
+}
+
 function splitAtString(str:string):string[]{
     const parts=str.split('@').map(s=>'@'+s.trim());
     if(parts[0]==='@'){

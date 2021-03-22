@@ -1,7 +1,9 @@
 import * as fs from 'fs/promises';
-import { OutputHandler, ProcessingCtx } from "./types";
+import { firstToLower } from './entity-scaffold';
+import { Entity, OutputHandler, ProcessingCtx } from "./types";
 
 const tab='    ';
+const tab2=tab+tab;
 
 function mapType(type:string){
     switch(type){
@@ -17,6 +19,7 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
 
     const tsOuts=ctx.args['--ts-out']?.split(',').map(o=>o.trim());
     const tsHeader=ctx.args['--ts-out-header'];
+    const copyConstructors=ctx.args['--ts-cc']==='1';
 
     if(!tsOuts){
         throw new Error('--ts-out required');
@@ -59,7 +62,82 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                         `${mapType(prop.typeName)}${(prop.isCollection?'[]':'')};`)
                 }
 
-                await append('}\n\n')
+
+                if(copyConstructors){
+                    let anySources=false;
+                    const sources=entity.props.reduce<{[type:string]:Entity}>((map,prop)=>{
+                        if(prop.copySource){
+                            const sourceE=ctx.entities.find(e=>e.name===prop.copySource?.entity);
+                            if(!sourceE){
+                                throw new Error(
+                                    'Unable to find copySource entity. entity:'+entity.name+', prop:'+prop.name)
+                            }
+                            map[prop.copySource.entity]=sourceE;
+                            anySources=true;
+                        }
+                        return map;
+                    },{});
+
+                    await append('}');
+
+                    if(anySources){
+
+                        const pick:string[]=[];
+                        for(const prop of entity.props){
+                            if(!prop.copySource && !prop.isPointer && !prop.isQueryPointer){
+                                pick.push(prop.name);
+                            }
+                        }
+
+                        let cArgCount=0;
+                        let cOut=`export function create${entity.name}(`;
+                        const pickVar=firstToLower(entity.name);
+                        if(pick.length){
+                            cArgCount++;
+                            cOut+=`\n${tab}${pickVar}:Pick<${entity.name},`;
+                            cOut+=pick.map(v=>JSON.stringify(v)).join('|')+'>';
+                        }
+
+                        for(const e in sources){
+                            if(cArgCount){
+                                cOut+=',';
+                            }
+                            const isOptional=entity.props
+                                .some(p=>p.copySource?.entity===e && p.copySource.optional);
+                            cArgCount++;
+                            cOut+=`\n${tab}${firstToLower(e)}:${e+(isOptional?'|null':'')}`;
+                        }
+
+                        cOut+=`\n):${entity.name}{\n${tab}return {`;
+
+                        if(pick.length){
+                            for(const prop of pick){
+                                cOut+=`\n${tab2}${prop}:${pickVar}.${prop},`;
+                            }
+                        }
+
+                        for(const e in sources){
+                            cOut+=`\n\n${tab2}// ${e}`;
+                            const isOptional=entity.props
+                                .some(p=>p.copySource?.entity===e && p.copySource.optional);
+                            for(const prop of entity.props){
+                                if(prop.copySource?.entity!==e || prop.isPointer || prop.isQueryPointer){
+                                    continue;
+                                }
+                                cOut+=`\n${tab2}${prop.name}:${firstToLower(prop.copySource.entity)}${isOptional?'?':''}.${prop.copySource.prop},`;
+                            }
+                        }
+
+
+                        cOut+=`\n${tab}}\n}`;
+
+                        await append(cOut);
+
+                    }
+                }
+
+                await append('\n\n');
+
                 break;
             }
 

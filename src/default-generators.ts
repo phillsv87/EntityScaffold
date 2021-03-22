@@ -140,7 +140,7 @@ export class CopyGenerator extends Generator
             throw new Error('@copy source arg required. type:'+typeName);
         }
 
-    const sourceType=ctx.entities.find(t=>t.name===typeName);
+        const sourceType=ctx.entities.find(t=>t.name===typeName);
         if(!sourceType){
             throw new Error('@copy did not found its source type. type:'+typeName);
         }
@@ -148,34 +148,35 @@ export class CopyGenerator extends Generator
         const props=sourceType.props.filter(p=>p.sources.includes(source));
 
         for(let prop of props){
-        let name=prop.name;
+            let name=prop.name;
 
-        if(prefix){
-            name=prefix+name[0].toUpperCase()+name.substr(1);
-        }
+            if(prefix){
+                name=prefix+name[0].toUpperCase()+name.substr(1);
+            }
 
-        if(ctx.currentEntity.props.some(p=>p.name===name)){
-            continue;
-        }
+            if(ctx.currentEntity.props.some(p=>p.name===name)){
+                continue;
+            }
 
-        prop={
-            ...prop,
-            name,
-            isId:false,
-            sources:[],
-            copySource:{entity:typeName,prop:prop.name},
-            atts:cloneObj(prop.atts),
-            attAry:cloneObj(prop.attAry)
-        }
+            prop={
+                ...prop,
+                name,
+                isId:false,
+                sources:[],
+                copySource:{entity:typeName,prop:prop.name},
+                atts:cloneObj(prop.atts),
+                attAry:cloneObj(prop.attAry)
+            }
 
-        if(forward){
-            prop.sources.push(forward);
-        }
+            if(forward){
+                prop.sources.push(forward);
+            }
 
+            if(optional && prop.copySource){
+                prop.copySource.optional=true;
+            }
 
-        // todo - account for optional
-
-        ctx.currentEntity.props.push(prop);
+            ctx.currentEntity.props.push(prop);
         }
 
         this.resolved=true;
@@ -198,7 +199,12 @@ export class CopyValueGenerator extends Generator
     async executeAsync(ctx:ProcessingCtx, prop:Prop|null, op:Op|null):Promise<void>
     {
 
-        // todo
+        if(prop){
+            prop.copySource={
+                entity:this.getArg(0,'type'),
+                prop:this.getArg(1,'prop')
+            }
+        }
 
         this.resolved=true;
     }
