@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
-import { lineColName, lineSep, parseCsv } from './csv';
-import { parseOpString, toEntityType } from './entity-scaffold';
+import { lineColName, parseCsv } from './csv';
+import { parseEntityString, parseOpString, toEntityType } from './entity-scaffold';
 import { defaultEntityType, Entity, EntityType, Op, InputHandler, ProcessingCtx } from './types';
 
 
@@ -10,7 +10,7 @@ const typeKey='Text Area 1';
 
 export const lucidCsvInputHandler:InputHandler=async (ctx:ProcessingCtx)=>
 {
-    
+
     const source:string=ctx.args['--lucid-csv'];
     if(!source){
         throw new Error('--lucid-csv required');
@@ -26,48 +26,32 @@ export const lucidCsvInputHandler:InputHandler=async (ctx:ProcessingCtx)=>
             continue;
         }
 
-        const [typeParts,documentPath]=row[typeKey].split(lineSep).map(s=>s.trim());
+        let entity:Entity;
 
-        const [name,_type]=typeParts.split(':').map(s=>s.trim());
-        let type:EntityType;
-        
         try{
-            type=toEntityType(_type||defaultEntityType);
+            entity=parseEntityString(ctx,row[typeKey]);
         }catch(ex){
-            console.error('Entity:'+name+', Line:'+row[lineColName])
+            console.error('Entity parse error, Line:'+row[lineColName])
             throw ex;
         }
+        
 
-        const ops:Op[]=[];
 
         for(let i=2;;i++){
             let opStr=row['Text Area '+i];
             if(opStr===undefined){
                 break;
             }
-            if(opStr.includes(lineSep)){
-                opStr=opStr.split(lineSep).join('\n');
-            }
             try{
-                const op=parseOpString(ctx,opStr,type);
+                const op=parseOpString(ctx,opStr,entity.type);
                 if(op){
-                    ops.push(op);
+                    entity.ops.push(op);
                 }
             }catch(ex){
                 console.error('Entity:'+name+', Line:'+row[lineColName])
                 throw ex;
             }
 
-        }
-
-        const entity:Entity={
-            name,
-            type,
-            documentPath:documentPath||null,
-            opDepsResolved:false,
-            resolved:false,
-            props:[],
-            ops,
         }
         entities.push(entity);
 

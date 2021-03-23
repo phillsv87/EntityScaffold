@@ -133,19 +133,15 @@ export class CopyGenerator extends Generator
         const source=this.getArg(1,'source');
         const forward=this.getArg(2,'forward');
         const prefix=this.getArg(3,'prefix');
-        const opt=this.getArg(4,'optional');
-        const optional=opt?Boolean(opt):false;
-
-        if(!source){
-            throw new Error('@copy source arg required. type:'+typeName);
-        }
+        const optional=Boolean(this.getArg(4,'optional')||'false');
+        const asTmpl=Boolean(this.getArg(5,'asTmpl')||'false');
 
         const sourceType=ctx.entities.find(t=>t.name===typeName);
         if(!sourceType){
             throw new Error('@copy did not found its source type. type:'+typeName);
         }
 
-        const props=sourceType.props.filter(p=>p.sources.includes(source));
+        const props=sourceType.props.filter(p=>!source || p.sources.includes(source));
 
         for(let prop of props){
             let name=prop.name;
@@ -163,7 +159,7 @@ export class CopyGenerator extends Generator
                 name,
                 isId:false,
                 sources:[],
-                copySource:{entity:typeName,prop:prop.name},
+                copySource:(sourceType.isTemplate||asTmpl)?null:{entity:typeName,prop:prop.name},
                 atts:cloneObj(prop.atts),
                 attAry:cloneObj(prop.attAry)
             }

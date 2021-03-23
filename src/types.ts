@@ -56,6 +56,7 @@ export interface Entity
 {
     name:string;
     type:EntityType;
+    isTemplate:boolean;
     props:Prop[];
     ops:Op[];
     opDepsResolved:boolean;

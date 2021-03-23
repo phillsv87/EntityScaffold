@@ -1,7 +1,7 @@
 export type Row={[col:string]:string}
 
 export const lineColName='__LINE__';
-export const lineSep='\u2028';
+const lineSep='\u2028';
 
 function splitLine(line:string){
     return line.split(',').map(s=>s.split('"').join(''))
@@ -19,7 +19,7 @@ export function parseCsv(content:string, fixUnescapedNewlines?:boolean):Row[]
         for(let i=lines.length-1;i>0;i--){
             const parts=lines[i].split(',');
             if(Number.isNaN(Number(parts[0]))){
-                lines[i-1]+=lineSep+lines[i];
+                lines[i-1]+='\n'+lines[i];
                 lines[i]='';
             }
         }
@@ -29,7 +29,7 @@ export function parseCsv(content:string, fixUnescapedNewlines?:boolean):Row[]
     let lineNum=0;
     for(let line of lines){
         lineNum++;
-        line=line.trim();
+        line=line.split(lineSep).join('\n').trim();
         if(!line){
             continue;
         }

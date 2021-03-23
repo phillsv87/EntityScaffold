@@ -1,5 +1,5 @@
 import * as fs from 'fs/promises';
-import { allEntityTypes, allStartEnds, valueTypes, Generator, Entity, EntityType, Op, ProcessingConfig, ProcessingCtx, Prop, startGen } from "./types";
+import { allEntityTypes, allStartEnds, valueTypes, Generator, Entity, EntityType, Op, ProcessingConfig, ProcessingCtx, Prop, startGen, defaultEntityType } from "./types";
 
 
 const defaultMaxPass=10000;
@@ -50,6 +50,27 @@ export function createGenerator(config:ProcessingConfig, name:string, args:strin
         throw new Error('No generator factory found by name - '+name);
     }
     return factory(name,args);
+}
+
+export function parseEntityString(ctx:ProcessingCtx, eStr:string):Entity
+{
+    const [typeParts,documentPath]=eStr.split('\n').map(s=>s.trim());
+
+    const atts=typeParts.split('@').map(a=>a.trim());
+    const [name,_type]=atts[0].split(':').map(s=>s.trim());
+    const type:EntityType=toEntityType(_type||defaultEntityType);
+    atts.shift();
+    
+    return {
+        name,
+        type,
+        isTemplate:atts.includes('tmpl'),
+        documentPath:documentPath||null,
+        opDepsResolved:false,
+        resolved:false,
+        props:[],
+        ops:[],
+    }
 }
 
 export function parseOpString(ctx:ProcessingCtx, opStr:string, entityType:EntityType):Op|null
