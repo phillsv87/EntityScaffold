@@ -196,6 +196,18 @@ export function parseGenerators(ctx:ProcessingCtx, parts:string[]):Generator[]
     return parts.map(g=>parseGenerator(ctx,g));
 }
 
+export function addEntityProp(ctx:ProcessingCtx, entity:Entity, prop:Prop)
+{
+    if(entity.props.find(p=>p.name===prop?.name)){
+        throw new Error('Duplicate prop:'+prop.name+', entity:'+entity.name)
+    }
+    entity.props.push(prop);
+    for(const sOp of ctx.genStack){
+        const clone=createGenerator(ctx,sOp.name,sOp.args);
+        prop.generators.push(clone);
+        prop.resolved=false;
+    }
+}
 
 async function resolveEntityAsync(ctx:ProcessingCtx, entity:Entity)
 {
@@ -221,15 +233,7 @@ async function resolveEntityAsync(ctx:ProcessingCtx, entity:Entity)
 
         for(const op of entity.ops){
             if(op.prop){
-                if(entity.props.find(p=>p.name===op.prop?.name)){
-                    throw new Error('Duplicate prop:'+op.prop.name+', entity:'+entity.name)
-                }
-                entity.props.push(op.prop);
-                for(const sOp of ctx.genStack){
-                    const clone=createGenerator(ctx,sOp.name,sOp.args);
-                    op.prop.generators.push(clone);
-                }
-
+                addEntityProp(ctx,entity,op.prop);
             }else if(op.generators){
                 for(const gen of op.generators){
                     await gen.executeAsync(ctx,null,op);

@@ -23,3 +23,11 @@ export function cloneObj<T>(obj:T, maxDepth=20):T
     }
 
 }
+
+export function parseBool(value:string|null|undefined)
+{
+    if(!value){
+        return false;
+    }
+    return value.toLowerCase()==='true';
+}

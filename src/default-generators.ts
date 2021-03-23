@@ -1,5 +1,6 @@
+import { addEntityProp } from "./entity-scaffold";
 import { Entity, Generator, GeneratorFactory, Op, ProcessingCtx, Prop } from "./types";
-import { cloneObj } from "./util";
+import { cloneObj, parseBool } from "./util";
 
 
 /*
@@ -131,10 +132,10 @@ export class CopyGenerator extends Generator
 
         const typeName=this.getArg(0,'type');
         const source=this.getArg(1,'source');
-        const forward=this.getArg(2,'forward');
-        const prefix=this.getArg(3,'prefix');
-        const optional=Boolean(this.getArg(4,'optional')||'false');
-        const asTmpl=Boolean(this.getArg(5,'asTmpl')||'false');
+        const forward=this.getArg(null,'forward');
+        const prefix=this.getArg(null,'prefix');
+        const optional=parseBool(this.getArg(null,'optional')||'false');
+        const asTmpl=parseBool(this.getArg(null,'asTmpl')||'false');
 
         const sourceType=ctx.entities.find(t=>t.name===typeName);
         if(!sourceType){
@@ -171,8 +172,8 @@ export class CopyGenerator extends Generator
             if(optional && prop.copySource){
                 prop.copySource.optional=true;
             }
-
-            ctx.currentEntity.props.push(prop);
+            
+            addEntityProp(ctx,ctx.currentEntity,prop);
         }
 
         this.resolved=true;

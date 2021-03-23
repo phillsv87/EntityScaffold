@@ -146,14 +146,14 @@ export class Generator
         return new Promise<void>((r)=>r());
     }
 
-    getArg(index:number,name?:string){
+    getArg(index:number|null,name?:string){
         if(name){
             const v=this._namedArgs?.[name];
             if(v!==undefined){
                 return v;
             }
         }
-        return this.args[index];
+        return index===null?'':(this.args[index]||'');
     }
 }
 
