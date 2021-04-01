@@ -59,7 +59,7 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
 
                     await append(
                         `${tab}${prop.name}${(!prop.required && !prop.isId)?'?':''}:`+
-                        `${mapType(prop.typeName)}${(prop.isCollection?'[]':'')};`)
+                        `${mapType(prop.typeName)}${(prop.isCollection?'[]':'')}${prop.isNullable?'|null':''};`)
                 }
 
 
