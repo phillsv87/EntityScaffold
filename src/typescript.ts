@@ -156,7 +156,7 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
 
             case 'union':{
                 let outType=`export type ${entity.name}=`;
-                let outAll=`export const ${entity.name}All=[`;
+                let outAll=`export const ${entity.name}All:${entity.name}[]=[`;
 
                 let first=true;
                 for(const prop of entity.props){
