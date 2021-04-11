@@ -75,6 +75,7 @@ export interface Prop
 {
     name:string;
     isId:boolean;
+    isInheritedId:boolean;
     type:SysType;
     typeName:string;
     isNullable:boolean;
@@ -90,6 +91,8 @@ export interface Prop
 
     /** An array of sources the property is apart of */
     sources:string[];
+
+    prefix:string|null;
 
     attAry:Att[];
     atts:{[name:string]:any};

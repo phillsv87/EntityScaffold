@@ -135,6 +135,7 @@ export class CopyGenerator extends Generator
         const forward=this.getArg(null,'forward');
         const prefix=this.getArg(null,'prefix');
         const prefixId=parseBool(this.getArg(null,'prefixId')||'false');
+        const prefixPrefixed=parseBool(this.getArg(null,'prefixPrefixed')||'false');
         const optional=parseBool(this.getArg(null,'optional')||'false');
         const asTmpl=parseBool(this.getArg(null,'asTmpl')||'false');
 
@@ -148,7 +149,12 @@ export class CopyGenerator extends Generator
         for(let prop of props){
             let name=prop.name;
 
-            if(prefix && (!prop.isId || prefixId)){
+            let prefixValue:string|null=null;
+            if( prefix &&
+                (!(prop.isId || prop.isInheritedId) || prefixId) &&
+                (!prop.prefix || prefixPrefixed))
+            {
+                prefixValue=prefix;
                 name=prefix+name[0].toUpperCase()+name.substr(1);
             }
 
@@ -159,7 +165,9 @@ export class CopyGenerator extends Generator
             prop={
                 ...prop,
                 name,
+                prefix:prefixValue||prop.prefix,
                 isId:false,
+                isInheritedId:prop.isId || prop.isInheritedId,
                 sources:[],
                 copySource:(sourceType.isTemplate||asTmpl)?null:{entity:typeName,prop:prop.name},
                 atts:cloneObj(prop.atts),
