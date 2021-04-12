@@ -210,7 +210,7 @@ export class CopyValueGenerator extends Generator
         if(prop){
             prop.copySource={
                 entity:this.getArg(0,'type'),
-                prop:this.getArg(1,'prop')
+                prop:this.getArg(1,'prop')||prop.name
             }
         }
 

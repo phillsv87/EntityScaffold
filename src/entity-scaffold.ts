@@ -355,6 +355,8 @@ export async function processAsync(config:ProcessingConfig):Promise<ProcessingCt
 
     await resolveCtxAsync(ctx);
 
+    ctx.entities.sort((a,b)=>a.name.localeCompare(b.name));
+
     for(const output of ctx.outputs){
         await output.handler(ctx);
     }

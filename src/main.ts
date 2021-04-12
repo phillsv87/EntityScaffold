@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import { createDefaultFactories } from './default-generators';
 import { processAsync } from './entity-scaffold';
+import { FirestoreOutputHandler } from './firestore-handler';
 import { lucidCsvInputHandler } from './lucid-csv';
 import { TypeScriptOutputHandler } from './typescript-handler';
 
@@ -24,9 +25,10 @@ async function processModelAsync()
             inputs:[{
                 handler:lucidCsvInputHandler
             }],
-            outputs:[{
-                handler:TypeScriptOutputHandler
-            }],
+            outputs:[
+                {handler:TypeScriptOutputHandler},
+                {handler:FirestoreOutputHandler},
+            ],
             generatorFactories:createDefaultFactories()
         });
 

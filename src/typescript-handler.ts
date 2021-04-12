@@ -22,7 +22,7 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
     const copyConstructors=ctx.args['--ts-cc']==='1';
 
     if(!tsOuts){
-        throw new Error('--ts-out required');
+        return;
     }
 
     const tsOut=tsOuts[0];
