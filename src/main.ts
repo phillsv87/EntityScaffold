@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import { createDefaultFactories } from './default-generators';
 import { processAsync } from './entity-scaffold';
 import { lucidCsvInputHandler } from './lucid-csv';
-import { TypeScriptOutputHandler } from './typescript';
+import { TypeScriptOutputHandler } from './typescript-handler';
 
 console.log('entity-scaffold')
 
