@@ -97,6 +97,8 @@ export interface Prop
     attAry:Att[];
     atts:{[name:string]:any};
 
+    defaultValue:string|null;
+
     /**
      * Generators can generate attributes or more generators.
      * As generators are ran the are removed from this array

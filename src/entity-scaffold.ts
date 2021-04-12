@@ -161,6 +161,7 @@ export function parsePropAry(ctx:ProcessingCtx, parts:string[], entityType:Entit
         isCollection,
         resolved:false,
         prefix:null,
+        defaultValue:null,
         sources:[],
         attAry:[],
         atts:{},

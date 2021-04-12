@@ -113,10 +113,17 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                         if(pick.length){
                             for(const prop of pick){
                                 const eProp=entity.props.find(p=>p.name==prop);
-                                if(eProp?.isValueType){
-                                    cOut+=`\n${tab2}${prop}:${pickVar}.${prop},`;
+                                if(!eProp){
+                                    continue;
+                                }
+                                let valueExp:string=`${pickVar}.${prop}`
+                                if(eProp.defaultValue!==null){
+                                    valueExp=`${valueExp}===undefined?(${eProp.defaultValue}):${valueExp}`;
+                                }
+                                if(eProp.isValueType){
+                                    cOut+=`\n${tab2}${prop}:${valueExp},`;
                                 }else{
-                                    cOut+=`\n${tab2}${prop}:cloneObj(${pickVar}.${prop}),`;
+                                    cOut+=`\n${tab2}${prop}:cloneObj(${valueExp}),`;
                                 }
                             }
                         }
@@ -129,14 +136,16 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                                 if(prop.copySource?.entity!==e || prop.isPointer || prop.isQueryPointer){
                                     continue;
                                 }
+                                let valueExp:string=`${firstToLower(prop.copySource.entity)}${isOptional?'?':''}.${prop.copySource.prop}`;
+                                if(prop.defaultValue!==null){
+                                    valueExp=`${valueExp}===undefined?(${prop.defaultValue}):${valueExp}`;
+                                }
                                 if(prop.isValueType){
                                     cOut+=
-                                        `\n${tab2}${prop.name}:${firstToLower(prop.copySource.entity)}`+
-                                        `${isOptional?'?':''}.${prop.copySource.prop},`;
+                                        `\n${tab2}${prop.name}:${valueExp},`;
                                 }else{
                                     cOut+=
-                                        `\n${tab2}${prop.name}:cloneObj(${firstToLower(prop.copySource.entity)}`+
-                                        `${isOptional?'?':''}.${prop.copySource.prop}),`;
+                                        `\n${tab2}${prop.name}:cloneObj(${valueExp}),`;
                                 }
                             }
                         }

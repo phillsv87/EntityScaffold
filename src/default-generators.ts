@@ -9,7 +9,7 @@ import { cloneObj, parseBool } from "./util";
 - @id - marks a property as the id for a type. By default if the first property of a type ends with "Id" it is 
 - @source {sourceName} - Adds an individual property to a source block
 - *@exclude {sourceName} - excludes a property from a source block
-- *@copyValue {type} {propName} - copies the value of a property from another type
+- @copyValue {type} {propName} - copies the value of a property from another type
 - @copy {type} {sourceName} forward:{forwardSource?} prefix:{prefixValue?} optional:{bool?}
   - copies properties marked for copying by the given name
   - {type} - the type to copy from
@@ -17,6 +17,7 @@ import { cloneObj, parseBool } from "./util";
   - forward:{forwardSource} - if specified the copy properties will be added as a source by the given name
   - prefix:{prefixValue} - Adds a prefix to the names of the source properties. Casing is adjusted
   - optional:{bool} - if true the copy constructor marks the copy source as optional
+- @default {value} - sets the default value of the of the property
  */
 export function createDefaultFactories():{[name:string]:GeneratorFactory}
 {
@@ -29,6 +30,7 @@ export function createDefaultFactories():{[name:string]:GeneratorFactory}
         "@copy":(name,args)=>new CopyGenerator(name,args),
         "@copyValue":(name,args)=>new CopyValueGenerator(name,args),
         "@required":(name,args)=>new RequiredGenerator(name,args),
+        "@default":(name,args)=>new DefaultGenerator(name,args),
 
     }
 }
@@ -222,6 +224,17 @@ export class RequiredGenerator extends Generator
     {
         if(prop){
             prop.required=true;
+        }
+        this.resolved=true;
+    }
+}
+
+export class DefaultGenerator extends Generator
+{
+    async executeAsync(ctx:ProcessingCtx, prop:Prop|null, op:Op|null):Promise<void>
+    {
+        if(prop){
+            prop.defaultValue=this.getArg(0,'value');
         }
         this.resolved=true;
     }
