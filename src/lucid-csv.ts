@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import { lineColName, parseCsv } from './csv';
-import { parseEntityString, parseOpString, toEntityType } from './entity-scaffold';
-import { defaultEntityType, Entity, EntityType, Op, InputHandler, ProcessingCtx } from './types';
+import { parseEntityString, parseOpString } from './entity-scaffold';
+import { Entity, InputHandler, ProcessingCtx } from './types';
 
 
 const shapeKey='Shape Library';
@@ -48,7 +48,7 @@ export const lucidCsvInputHandler:InputHandler=async (ctx:ProcessingCtx)=>
                     entity.ops.push(op);
                 }
             }catch(ex){
-                console.error('Entity:'+name+', Line:'+row[lineColName])
+                console.error('Entity:'+entity.name+', Line:'+row[lineColName])
                 throw ex;
             }
 
