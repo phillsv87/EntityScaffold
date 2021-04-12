@@ -10,6 +10,7 @@ const AliasMap:{[key:string]:string}={
     '@startPublic':'@start @source public',
     '@endPublic':'@end public',
     '@public':'@source public',
+    '@basic':'@source basic',
 }
 
 export function unAlias(value:string){
