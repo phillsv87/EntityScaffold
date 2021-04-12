@@ -140,6 +140,7 @@ export class CopyGenerator extends Generator
         const prefixPrefixed=parseBool(this.getArg(null,'prefixPrefixed')||'false');
         const optional=parseBool(this.getArg(null,'optional')||'false');
         const asTmpl=parseBool(this.getArg(null,'asTmpl')||'false');
+        const copyDefault=parseBool(this.getArg(null,'copyDefault')||'false');
 
         const sourceType=ctx.entities.find(t=>t.name===typeName);
         if(!sourceType){
@@ -168,6 +169,7 @@ export class CopyGenerator extends Generator
                 ...prop,
                 name,
                 prefix:prefixValue||prop.prefix,
+                defaultValue:copyDefault?prop.defaultValue:null,
                 isId:false,
                 isInheritedId:prop.isId || prop.isInheritedId,
                 sources:[],
