@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
-import { firstToLower } from './entity-scaffold';
+import { firstToLower, getFileNameNoExt, getPlugin } from './entity-scaffold';
+import { TypeHubPlugin } from './typehub-lib';
 import { OutputHandler, ProcessingCtx } from "./types";
 
 const idReg=/\{(\w+)\}/g;
@@ -18,7 +19,11 @@ export const FirestoreOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
         throw new Error('--firestore-types-path required');
     }
 
+    const typeHub=getPlugin(ctx,TypeHubPlugin);
+
     const tsOut=tsOuts[0];
+
+    const importName='./'+getFileNameNoExt(tsOut);
 
     const append=(content:string,newline:boolean=true)=>
         fs.appendFile(tsOut,content+(newline?'\n':''));
@@ -29,6 +34,12 @@ export const FirestoreOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
     const types=ctx.entities.filter(t=>t.documentPath && t.type==='interface');
 
     await append('import { '+types.map(t=>t.name).join(', ')+' } from \''+typesPath+'\';\n');
+    if(typeHub){
+        typeHub.addImports(types.map(t=>({
+            from:typesPath,
+            name:t.name
+        })))
+    }
 
     if(tsHeader){
         const header=await fs.readFile(tsHeader);
@@ -79,6 +90,43 @@ export function get${type.name}ByRefAsync(${lName}:${type.name}, trans?:Transact
 {
     return get${type.name}Async(${idObjParams},trans);
 }\n\n`);
+
+        if(typeHub){
+            typeHub
+                .addImport({
+                    name:`get${type.name}Doc`,
+                    from:importName
+                })
+                .addImport({
+                    name:`get${type.name}DocByRef`,
+                    from:importName
+                })
+                .addImport({
+                    name:`get${type.name}Async`,
+                    from:importName
+                })
+                .addImport({
+                    name:`get${type.name}ByRefAsync`,
+                    from:importName
+                })
+                .addMember({
+                    typeName:type.name,
+                    memberBody:`public doc(${idParams}){return get${type.name}Doc(${idParamValues})}`,
+                })
+                .addMember({
+                    typeName:type.name,
+                    memberBody:`public docByRef(${lName}:${type.name}){return get${type.name}DocByRef(${lName})}`,
+                })
+                .addMember({
+                    typeName:type.name,
+                    memberBody:`public getAsync(${idParams}, trans?:Transaction|null){return get${type.name}Async(${idParamValues},trans)}`,
+                })
+                .addMember({
+                    typeName:type.name,
+                    memberBody:`public getByRefAsync(${lName}:${type.name}, trans?:Transaction|null){return get${type.name}ByRefAsync(${lName},trans)}`,
+                });
+        }
+
     }
 
 

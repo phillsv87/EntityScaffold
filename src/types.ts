@@ -15,6 +15,7 @@ export type GeneratorFactory=(name:string,args:string[])=>Generator;
 export interface ProcessingConfig
 {
     args:{[arg:string]:string};
+    plugins?:Plugin[];
     inputs:Input[];
     outputs:Output[];
     generatorFactories:{[name:string]:GeneratorFactory}
@@ -184,4 +185,16 @@ export interface ProcessingCtx extends ProcessingConfig
 
     /** If pass exceeds this value processing is stopped and an error is thrown */
     maxPasses:number;
+
+    pluginMap:{[key:string]:Plugin}
+}
+
+export class Plugin
+{
+    public readonly key:string;
+
+    constructor(key:string)
+    {
+        this.key=key;
+    }
 }

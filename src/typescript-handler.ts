@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
-import { firstToLower } from './entity-scaffold';
+import { firstToLower, getFileNameNoExt, getPlugin } from './entity-scaffold';
+import { TypeHubPlugin } from './typehub-lib';
 import { Entity, OutputHandler, ProcessingCtx } from "./types";
 
 const tab='    ';
@@ -25,7 +26,11 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
         return;
     }
 
+    const typeHub=getPlugin(ctx,TypeHubPlugin);
+
     const tsOut=tsOuts[0];
+
+    const importName='./'+getFileNameNoExt(tsOut);
 
     const append=(content:string,newline:boolean=true)=>
         fs.appendFile(tsOut,content+(newline?'\n':''));
@@ -80,22 +85,37 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
 
                     await append('}');
 
-                    if(anySources){
+                    //if(anySources){
 
                         const pick:string[]=[];
                         for(const prop of entity.props){
-                            if(!prop.copySource && !prop.isPointer && !prop.isQueryPointer){
+                            if(!prop.copySource && !prop.isPointer && !prop.isQueryPointer && !(prop.isId && prop.defaultValue)){
                                 pick.push(prop.name);
                             }
                         }
 
                         let cArgCount=0;
-                        let cOut=`export function create${entity.name}(`;
+                        let cOut='';
+                        let pinf='';
+                        const argNames:string[]=[];
                         const pickVar=firstToLower(entity.name);
                         if(pick.length){
                             cArgCount++;
-                            cOut+=`\n${tab}${pickVar}:Pick<${entity.name},`;
-                            cOut+=pick.map(v=>JSON.stringify(v)).join('|')+'>';
+                            pinf+=`\nexport interface ${entity.name}Construct extends Pick<${entity.name},`;
+                            pinf+=pick.map(v=>JSON.stringify(v)).join('|')+'>';
+                            const idProp=entity.props.find(p=>p.isId && p.defaultValue);
+                            if(idProp){
+                                pinf+=`, Partial<Pick<${entity.name},${JSON.stringify(idProp.name)}>>`;
+                                pick.unshift(idProp.name)
+                            }
+                            pinf+='{}';
+                            cOut+=`\n${tab}${pickVar}:${entity.name}Construct`
+                            argNames.push(pickVar);
+
+                            typeHub?.addImport({
+                                name:`${entity.name}Construct`,
+                                from:importName
+                            })
                         }
 
                         for(const e in sources){
@@ -106,7 +126,29 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                                 .some(p=>p.copySource?.entity===e && p.copySource.optional);
                             cArgCount++;
                             cOut+=`\n${tab}${firstToLower(e)}:${e+(isOptional?'|null':'')}`;
+                            argNames.push(firstToLower(e));
+                            typeHub?.addImport({
+                                name:e,
+                                from:importName
+                            })
                         }
+
+                        if(typeHub){
+                            typeHub
+                                .addMember({
+                                    typeName:entity.name,
+                                    memberBody:
+                                        `public create(${cOut.split('\n').join('').split(' ').join('')})`+
+                                        `{return create${entity.name}(${argNames.join(',')})}`
+                                })
+                                .addImport({
+                                    name:`create${entity.name}`,
+                                    from:importName
+                                })
+
+                        }
+
+                        cOut=`${pinf}\nexport function create${entity.name}(${cOut}`
 
                         cOut+=`\n):${entity.name}{\n${tab}return deleteUndefined({`;
 
@@ -156,7 +198,7 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                         await append(cOut);
 
                     }
-                }
+                //}
 
                 await append('\n\n');
 

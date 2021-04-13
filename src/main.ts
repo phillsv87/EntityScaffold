@@ -3,6 +3,8 @@ import { createDefaultFactories } from './default-generators';
 import { processAsync } from './entity-scaffold';
 import { FirestoreOutputHandler } from './firestore-handler';
 import { lucidCsvInputHandler } from './lucid-csv';
+import { TypeHubOutputHandler } from './typehub-handler';
+import { TypeHubPlugin } from './typehub-lib';
 import { TypeScriptOutputHandler } from './typescript-handler';
 
 console.log('entity-scaffold')
@@ -22,12 +24,16 @@ async function processModelAsync()
     try{
         const ctx=await processAsync({
             args,
+            plugins:[
+                new TypeHubPlugin()
+            ],
             inputs:[{
                 handler:lucidCsvInputHandler
             }],
             outputs:[
                 {handler:TypeScriptOutputHandler},
                 {handler:FirestoreOutputHandler},
+                {handler:TypeHubOutputHandler},
             ],
             generatorFactories:createDefaultFactories()
         });

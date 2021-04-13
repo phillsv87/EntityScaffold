@@ -344,7 +344,14 @@ export async function processAsync(config:ProcessingConfig):Promise<ProcessingCt
         currentProp:null,
         genStack:[],
         entities:[],
+        pluginMap:{}
 
+    }
+
+    if(ctx.plugins){
+        for(const p of ctx.plugins){
+            ctx.pluginMap[p.key]=p;
+        }
     }
 
     for(const input of ctx.inputs){
@@ -367,4 +374,22 @@ export async function processAsync(config:ProcessingConfig):Promise<ProcessingCt
     ctx.currentProp=null;
 
     return ctx;
+}
+
+export function getPlugin<T>(ctx:ProcessingCtx, pluginClass:{ new (): T }):T|null
+{
+    return ctx.pluginMap[(pluginClass as any).key] as any||null;
+}
+
+export function getFileName(filename:string)
+{
+    const i=Math.max(filename.lastIndexOf('/'),filename.lastIndexOf('\\'));
+    return i===-1?filename:filename.substr(i+1);
+}
+
+export function getFileNameNoExt(filename:string)
+{
+    filename=getFileName(filename);
+    const i=filename.lastIndexOf('.');
+    return i===-1?filename:filename.substr(0,i);
 }
