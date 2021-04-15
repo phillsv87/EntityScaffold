@@ -11,12 +11,23 @@ const AliasMap:{[key:string]:string}={
     '@endPublic':'@end public',
     '@public':'@source public',
     '@basic':'@source basic',
+    '@uuid':'@default newUuid()',
+    '@autoId':'@public @basic @uuid'
 }
 
 export function unAlias(value:string){
-    for(const e in AliasMap){
-        value=value.split(e).join(AliasMap[e]);
-    }
+    let prev:string;
+    let count=0;
+    do{
+        prev=value;
+        for(const e in AliasMap){
+            value=value.split(e).join(AliasMap[e]);
+        }
+        count++;
+        if(count>100){
+            throw new Error('Max alias depth reached. Their is likely a recursive alias definition');
+        }
+    }while(prev!==value)
     return value;
 }
 
