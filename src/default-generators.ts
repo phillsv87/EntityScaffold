@@ -31,6 +31,7 @@ export function createDefaultFactories():{[name:string]:GeneratorFactory}
         "@copyValue":(name,args)=>new CopyValueGenerator(name,args),
         "@required":(name,args)=>new RequiredGenerator(name,args),
         "@default":(name,args)=>new DefaultGenerator(name,args),
+        "@docPath":(name,args)=>new DocPathGenerator(name,args),
 
     }
 }
@@ -237,6 +238,17 @@ export class DefaultGenerator extends Generator
     {
         if(prop){
             prop.defaultValue=this.getArg(0,'value');
+        }
+        this.resolved=true;
+    }
+}
+
+export class DocPathGenerator extends Generator
+{
+    async executeAsync(ctx:ProcessingCtx, prop:Prop|null, op:Op|null):Promise<void>
+    {
+        if(ctx.currentEntity){
+            ctx.currentEntity.documentPath=this.getArg(0,'path');
         }
         this.resolved=true;
     }

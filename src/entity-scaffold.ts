@@ -11,7 +11,7 @@ const AliasMap:{[key:string]:string}={
     '@endPublic':'@end public',
     '@public':'@source public',
     '@basic':'@source basic',
-    '@uuid':'@default newUuid()',
+    '@uuid':'@default newUid()',
     '@autoId':'@public @basic @uuid'
 }
 
@@ -66,9 +66,7 @@ export function createGenerator(config:ProcessingConfig, name:string, args:strin
 
 export function parseEntityString(ctx:ProcessingCtx, eStr:string):Entity
 {
-    const [typeParts,documentPath]=eStr.split('\n').map(s=>s.trim());
-
-    const atts=typeParts.split('@').map(a=>a.trim());
+    const atts=eStr.split('@').map(a=>a.trim());
     const [name,_type]=atts[0].split(':').map(s=>s.trim());
     const type:EntityType=toEntityType(_type||defaultEntityType);
     atts.shift();
@@ -77,7 +75,7 @@ export function parseEntityString(ctx:ProcessingCtx, eStr:string):Entity
         name,
         type,
         isTemplate:atts.includes('tmpl'),
-        documentPath:documentPath||null,
+        documentPath:null,
         opDepsResolved:false,
         resolved:false,
         props:[],
@@ -90,6 +88,10 @@ export function parseOpString(ctx:ProcessingCtx, opStr:string, entityType:Entity
     opStr=opStr?.trim();
     if(!opStr){
         return null;
+    }
+
+    if(opStr.startsWith('/')){
+        opStr='@docPath '+opStr;
     }
 
     let comment:string|null=null;
@@ -121,9 +123,15 @@ export function parsePropAry(ctx:ProcessingCtx, parts:string[], entityType:Entit
         throw new Error('Empty Prop array');
     }
 
-    let [name,type]=parts[0].split(':',2).map(s=>s.trim());
+    const i=parts[0].indexOf(':');
+    let name=i===-1?parts[0].trim():parts[0].substr(0,i).trim();
+    let type=i===-1?'':parts[0].substr(i+1).trim();
     if(entityType==='union' && !type){
         type='string';
+    }
+    const typeParts=entityType==='typeDef' && name==='type'?[type]:type.split(':').map(t=>t.trim());
+    if(entityType!=='typeDef'){
+        type=typeParts[0];
     }
     if(!type){
         throw new Error('property type expected. Property - '+name);

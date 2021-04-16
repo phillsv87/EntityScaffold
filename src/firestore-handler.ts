@@ -3,7 +3,7 @@ import { firstToLower, getFileNameNoExt, getPlugin } from './entity-scaffold';
 import { TypeHubPlugin } from './typehub-lib';
 import { OutputHandler, ProcessingCtx } from "./types";
 
-const idReg=/\{(\w+)\}/g;
+const idReg=/\{(\*\*)?(\w+)\}/g;
 
 export const FirestoreOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
     
@@ -61,14 +61,14 @@ export const FirestoreOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
 
         const lName=firstToLower(type.name);
 
-        const idParams=ids.map(i=>i[1]+':string').join(', ');
-        const idParamValues=ids.map(i=>i[1]).join(',');
-        const idObjParams=ids.map(i=>`${lName}.${i[1]}||''`).join(',');
+        const idParams=ids.map(i=>i[2]+':string').join(', ');
+        const idParamValues=ids.map(i=>i[2]).join(',');
+        const idObjParams=ids.map(i=>`${lName}.${i[2]}||''`).join(',');
 
         const checkIds=ids.map(i=>(`
-    if(!${i[1]}){throw new Error('get${type.name}Doc requires ${i[1]}')}`)).join('')
+    ${i[1]?'validateDocPath':'validateDocId'}(${i[2]},'${type.name}.${i[2]}');`)).filter(i=>i).join('')
 
-        const path=type.documentPath.split('{').join('${');
+        const path=type.documentPath.split('{').join('${').split('*').join('');
 
         await append(
 `export function get${type.name}Doc(${idParams}):DocumentReference<DocumentData>
@@ -128,6 +128,47 @@ export function get${type.name}ByRefAsync(${lName}:${type.name}, trans?:Transact
         }
 
     }
+
+    await append(
+`
+export function isValidDocId(id:string|null|undefined)
+{
+    return (
+        id &&
+        id.indexOf('/')===-1 &&
+        id!=='.' &&
+        id!=='..' &&
+        !(id.startsWith('__') && id.endsWith('__'))
+    )?true:false
+}
+
+export function validateDocId(id:string|null|undefined, msg?:string)
+{
+    if(!isValidDocId(id)){
+        throw new Error('Invalid document Id'+(msg?'. '+msg:''));
+    }
+}
+
+export function isValidDocPath(path:string|null|undefined){
+    if(!path){
+        return false;
+    }
+    const parts=path.split('/');
+    for(const p of parts){
+        if(!isValidDocId(p)){
+            return false;
+        }
+    }
+    return true;
+}
+
+export function validateDocPath(path:string|null|undefined, msg?:string)
+{
+    if(!isValidDocPath(path)){
+        throw new Error('Invalid document path'+(msg?'. '+msg:''));
+    }
+}
+`)
 
 
     for(let i=1;i<tsOuts.length;i++){

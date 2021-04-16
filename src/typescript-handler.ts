@@ -99,6 +99,7 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                         let pinf='';
                         const argNames:string[]=[];
                         const pickVar=firstToLower(entity.name);
+
                         if(pick.length){
                             cArgCount++;
                             pinf+=`\nexport interface ${entity.name}Construct extends Pick<${entity.name},`;
@@ -109,14 +110,23 @@ export const TypeScriptOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
                                 pick.unshift(idProp.name)
                             }
                             pinf+='{}';
+                        }else{
+                            const idProp=entity.props.find(p=>p.isId && p.defaultValue);
+                            if(idProp){
+                                cArgCount++;
+                                pinf+=`\nexport type ${entity.name}Construct=Partial<Pick<${entity.name},${JSON.stringify(idProp.name)}>>;`;
+                                pick.unshift(idProp.name)
+                            }
+                        }
+                        if(pick.length){
                             cOut+=`\n${tab}${pickVar}:${entity.name}Construct`
                             argNames.push(pickVar);
-
                             typeHub?.addImport({
                                 name:`${entity.name}Construct`,
                                 from:importName
                             })
                         }
+                        
 
                         for(const e in sources){
                             if(cArgCount){
