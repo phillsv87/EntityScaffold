@@ -71,10 +71,18 @@ export const FirestoreOutputHandler:OutputHandler=async (ctx:ProcessingCtx)=>{
         const path=type.documentPath.split('{').join('${').split('*').join('');
 
         await append(
-`export function get${type.name}Doc(${idParams}):DocumentReference<DocumentData>
+`export function get${type.name}DocPath(${idParams}):string
 {
     ${checkIds}
-    return db().doc(\`${path}\`);
+    return \`${path}\`;
+}
+export function get${type.name}DocPathByRef(${lName}:${type.name}):string
+{
+    return get${type.name}DocPath(${idObjParams});
+}
+export function get${type.name}Doc(${idParams}):DocumentReference<DocumentData>
+{
+    return db().doc(get${type.name}DocPath(${idParamValues}));
 }
 export function get${type.name}DocByRef(${lName}:${type.name}):DocumentReference<DocumentData>
 {
@@ -89,10 +97,28 @@ export async function get${type.name}Async(${idParams}, trans?:Transaction|null)
 export function get${type.name}ByRefAsync(${lName}:${type.name}, trans?:Transaction|null):Promise<${type.name}|null>
 {
     return get${type.name}Async(${idObjParams},trans);
+}
+export async function create${type.name}Async(${lName}:${type.name}):Promise<${type.name}>
+{
+    await db().doc(get${type.name}DocPathByRef(${lName})).create(${lName});
+    return ${lName};
+}
+export function create${type.name}Trans(${lName}:${type.name}, trans:Transaction):${type.name}
+{
+    trans.create(get${type.name}DocByRef(${lName}),${lName});
+    return ${lName};
 }\n\n`);
 
         if(typeHub){
             typeHub
+                .addImport({
+                    name:`get${type.name}DocPath`,
+                    from:importName
+                })
+                .addImport({
+                    name:`get${type.name}DocPathByRef`,
+                    from:importName
+                })
                 .addImport({
                     name:`get${type.name}Doc`,
                     from:importName
@@ -109,6 +135,22 @@ export function get${type.name}ByRefAsync(${lName}:${type.name}, trans?:Transact
                     name:`get${type.name}ByRefAsync`,
                     from:importName
                 })
+                .addImport({
+                    name:`create${type.name}Async`,
+                    from:importName
+                })
+                .addImport({
+                    name:`create${type.name}Trans`,
+                    from:importName
+                })
+                .addMember({
+                    typeName:type.name,
+                    memberBody:`public docPath(${idParams}){return get${type.name}DocPath(${idParamValues})}`,
+                })
+                .addMember({
+                    typeName:type.name,
+                    memberBody:`public docPathByRef(${lName}:${type.name}){return get${type.name}DocPathByRef(${lName})}`,
+                })
                 .addMember({
                     typeName:type.name,
                     memberBody:`public doc(${idParams}){return get${type.name}Doc(${idParamValues})}`,
@@ -124,6 +166,14 @@ export function get${type.name}ByRefAsync(${lName}:${type.name}, trans?:Transact
                 .addMember({
                     typeName:type.name,
                     memberBody:`public getByRefAsync(${lName}:${type.name}, trans?:Transaction|null){return get${type.name}ByRefAsync(${lName},trans)}`,
+                })
+                .addMember({
+                    typeName:type.name,
+                    memberBody:`public async createAsync(${lName}:${type.name}){return await create${type.name}Async(${lName})}`,
+                })
+                .addMember({
+                    typeName:type.name,
+                    memberBody:`public createTrans(${lName}:${type.name}, trans:Transaction){return create${type.name}Trans(${lName},trans)}`,
                 });
         }
 
